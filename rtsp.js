@@ -1,13 +1,26 @@
 require('dotenv').config()
-const Recorder = require('node-rtsp-recorder').Recorder
+const childProcess = require('node:child_process')
 
-const getCapture = new Recorder({
-  url: process.env.RTSP,
-  folder: 'cctv',
-  name: 'cam1',
-  type: 'image',
-  fileNameFormat: 'YYYYMMDDhhmmss'
-})
+const captureImageRTSP = (channel) => {
+  const filename = `./${channel}.jpg`
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-rtsp_transport',
+      'tcp',
+      '-i',
+      `${process.env.RTSP}${channel}`,
+      '-vframes',
+      '1',
+      filename
+    ]
+
+    const ffmpeg = childProcess.spawn('ffmpeg', args, { detached: false, stdio: 'ignore' })
+
+    ffmpeg.once('exit', (code) => {
+      resolve(filename)
+    })
+  })
+}
 
 // const getCaptureFileName = () => {
 //   getCapture.captureImage(() => {
@@ -19,5 +32,5 @@ const getCapture = new Recorder({
 // }
 
 module.exports = {
-  getCapture
+  captureImageRTSP
 }
