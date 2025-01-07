@@ -1,4 +1,4 @@
-FROM node:16.17
+FROM node:22
 RUN apt update
 RUN apt install ffmpeg -y
 

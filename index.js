@@ -4,7 +4,7 @@ const { Telegraf, Input } = require('telegraf')
 const { message } = require('telegraf/filters')
 const { getUsernamesAndBody, now } = require('./helper')
 const { matchWmoCode } = require('./wmo')
-const { getCapture } = require('./rtsp')
+const { getCapture, captureImageRTSP } = require('./rtsp')
 const cron = require('node-cron')
 const axios = require('axios')
 const fs = require('fs')
@@ -29,7 +29,7 @@ const STICKEROWNER = require('./models/sticker_owner')
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
 const meteoWeather = {
   method: 'get',
-  maxBodyLength: Infinity,
+  maxBodyLength: Number.POSITIVE_INFINITY,
   url: 'https://api.open-meteo.com/v1/forecast?latitude=-7.7961&longitude=110.3208&current=temperature_2m,rain,weather_code&timezone=Asia%2FBangkok',
   headers: { }
 }
@@ -50,7 +50,7 @@ const getWeather = () => {
     })
 }
 
-const getCaptureFileName = async () => {
+const getCaptureFileName = async (channel) => {
   try {
     await getCapture.captureImage(() => {
       const ffmpegCommand = getCapture.writeStream.spawnargs
@@ -106,7 +106,7 @@ const COMMANDS = [
   const me = await bot.telegram.getMe()
 
   const STICKERSET_TITLE = process.env.STICKERSET_TITLE
-  const STICKERSET_NAME = STICKERSET_TITLE.replace(/\s+/g, '').toLowerCase().trim() + '_by_' + me.username
+  const STICKERSET_NAME = `${STICKERSET_TITLE.replace(/\s+/g, '').toLowerCase().trim()}_by_${me.username}`
   const STICKERSET_OWNER_ID = process.env.STICKERSET_OWNER_ID
   const STICKERSET_DEFAULT_IMAGE = process.env.STICKERSET_DEFAULT_IMAGE
 
@@ -158,7 +158,7 @@ const COMMANDS = [
   }
 
   const login = async (ctx) => {
-    const from = '@' + ctx.from.username
+    const from = `@${ctx.from.username}`
     const when = `Online sejak ${now().format('HH:mm:ss')}`
     if (from === '@undefined') {
       ctx.reply('Set username telegram dulu kak!', {
@@ -185,7 +185,7 @@ const COMMANDS = [
   }
 
   const afk = async (ctx) => {
-    const from = '@' + ctx.from.username
+    const from = `@${ctx.from.username}`
     const when = `Afk sejak ${now().format('HH:mm:ss')}`
 
     const message = ctx.message.text || ''
@@ -217,7 +217,7 @@ const COMMANDS = [
   }
 
   const logout = async (ctx) => {
-    const from = '@' + ctx.from.username
+    const from = `@${ctx.from.username}`
     const when = `Logout sejak ${now().format('HH:mm:ss')}`
     const Data = await ABSENSI.findOne({
       telegram_user: from
@@ -377,7 +377,37 @@ const COMMANDS = [
 
   bot.command('cuaca', cuaca)
 
-  bot.command('mataelang', mataelang)
+  bot.command('mataelang', async (ctx) => {
+    try {
+      const image = await captureImageRTSP(101)
+      
+      bot.telegram.sendPhoto(process.env.TELEGRAM_REPORT_CHAT_ID, {
+        source: image,
+      });
+    } catch (err) {
+      console.error(err)
+      bot.telegram.sendMessage(
+        process.env.TELEGRAM_REPORT_CHAT_ID,
+        "error gan... "
+      );
+    }
+  })
+
+  bot.command("matalor", async (ctx) => {
+    try {
+      const image = await captureImageRTSP(101);
+
+      bot.telegram.sendPhoto(process.env.TELEGRAM_REPORT_CHAT_ID, {
+        source: image,
+      });
+    } catch (err) {
+      console.error(err);
+      bot.telegram.sendMessage(
+        process.env.TELEGRAM_REPORT_CHAT_ID,
+        "error gan... "
+      );
+    }
+  });
 
   bot.command('list', async (ctx) => {
     const users = await ABSENSI.find()
