@@ -23,6 +23,7 @@ mongoose.connect(uri, {
 const ABSENSI = require('./models/absensi')
 const STICKER = require('./models/sticker')
 const STICKEROWNER = require('./models/sticker_owner')
+const { unlinkSync } = require('fs')
 
 // bot
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN)
@@ -351,36 +352,47 @@ const COMMANDS = [
 
   bot.command('cuaca', cuaca)
 
-  bot.command('mataelang', async (ctx) => {
+  const isCapturing = {
+    101: false,
+    201: false
+  }
+  const snapshot = async (ctx, channel) => {
     try {
-      const image = await captureImageRTSP(101)
+      if (!isCapturing[channel]) {
+        isCapturing[channel] = true
 
-      bot.telegram.sendPhoto(process.env.TELEGRAM_REPORT_CHAT_ID, {
-        source: image
-      })
+        const image = await captureImageRTSP(channel)
+
+        await bot.telegram.sendPhoto(process.env.TELEGRAM_REPORT_CHAT_ID, {
+          source: image
+        })
+
+        // remove image
+        unlinkSync(image)
+
+        isCapturing[channel] = false
+      } else {
+        ctx.reply('wong kok ra sabaran...', {
+          reply_to_message_id: ctx.message.message_id
+        })
+      }
     } catch (err) {
       console.error(err)
       bot.telegram.sendMessage(
         process.env.TELEGRAM_REPORT_CHAT_ID,
         'error gan...'
       )
+
+      isCapturing[channel] = false
     }
+  }
+
+  bot.command('mataelang', async (ctx) => {
+    snapshot(ctx, 101)
   })
 
   bot.command('matalor', async (ctx) => {
-    try {
-      const image = await captureImageRTSP(201)
-
-      bot.telegram.sendPhoto(process.env.TELEGRAM_REPORT_CHAT_ID, {
-        source: image
-      })
-    } catch (err) {
-      console.error(err)
-      bot.telegram.sendMessage(
-        process.env.TELEGRAM_REPORT_CHAT_ID,
-        'error gan...'
-      )
-    }
+    snapshot(ctx, 201)
   })
 
   bot.command('list', async (ctx) => {
