@@ -388,11 +388,11 @@ const COMMANDS = [
   }
 
   bot.command('mataelang', async (ctx) => {
-    snapshot(ctx, 101)
+    snapshot(ctx, 201)
   })
 
   bot.command('matalor', async (ctx) => {
-    snapshot(ctx, 201)
+    snapshot(ctx, 401)
   })
 
   bot.command('list', async (ctx) => {
