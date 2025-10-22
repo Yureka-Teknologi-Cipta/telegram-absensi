@@ -389,13 +389,11 @@ const COMMANDS = [
 
   bot.command('mataelang', async (ctx) => {
     const mataelangChannel = process.env.RTSP_MATAELANG_CHANNEL || 201
-    console.log(mataelangChannel)
     snapshot(ctx, mataelangChannel)
   })
 
   bot.command('matalor', async (ctx) => {
     const matalorChannel = process.env.RTSP_MATALOR_CHANNEL || 401
-    console.log(matalorChannel)
     snapshot(ctx, matalorChannel)
   })
 
